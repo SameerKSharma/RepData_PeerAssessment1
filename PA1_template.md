@@ -1,0 +1,215 @@
+---
+title: "Reproducible Research-Project 1"
+author: "Sameer Sharma"
+date: "March 20, 2018"
+output: 
+  html_document: 
+    keep_md: yes
+---
+We first start by reading the CSV file
+
+
+```r
+activity_raw<-read.csv("activity.csv",
+                       stringsAsFactors=FALSE)
+```
+
+Let us ensure that the dates in the dataset are well understood by R as being dates themselves!
+
+
+```r
+activity_raw$date <- as.Date(activity_raw$date)
+```
+
+What is mean total number of steps taken per day?
+
+Q1:  Calculate total Number of Steps Per Day
+
+```r
+total_steps_per_day<- tapply(activity_raw$steps,
+                             activity_raw$date,sum)
+```
+Q2:   Histogram of Steps Taken Each Day
+
+```r
+hist(total_steps_per_day,xlab="Steps Per Day", main = 
+       "Histogram of Steps Per Day",col="red")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+Q3:  Calculate and report the mean and median of the total number of steps taken per day
+
+```r
+MeanPerDay <- mean(total_steps_per_day, na.rm = TRUE)
+MedianPerDay <- median(total_steps_per_day, na.rm = TRUE)
+print(MeanPerDay)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+print(MedianPerDay)
+```
+
+```
+## [1] 10765
+```
+The mean steps per day=10766.19 and 
+Median steps per day=10765
+
+What is the Average Daily Pattern?
+
+Q1:  Make a time series plot of the 5-minute interval 
+and the average number of steps taken, averaged across all days
+
+```r
+stepsperint<-tapply(activity_raw$steps,activity_raw$interval,
+                    mean,
+                    na.rm=T)
+
+plot(as.numeric(names(stepsperint)), 
+     stepsperint, 
+     xlab = "Interval", 
+     ylab = "Steps", 
+     main = "Average Daily Activity Pattern", 
+     type = "l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+Q2:  Which 5-minute interval, on average across all the 
+days in the dataset, contains the maximum number of steps?
+
+```r
+rank<-sort(stepsperint,decreasing = T)
+head(rank,1)
+```
+
+```
+##      835 
+## 206.1698
+```
+At 835th interval, max steps is 206.1698
+
+Imputing missing values
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+Q1: What is the number of missing values in the dataset?
+
+```r
+sum(is.na(activity_raw$steps))
+```
+
+```
+## [1] 2304
+```
+There are 2304 missing step values in the raw dataset.
+
+Q2: Devise strategy to fill in missing values
+We will use ImputeTS package to fill in missing values
+
+```r
+require(imputeTS)
+```
+
+```
+## Loading required package: imputeTS
+```
+
+```
+## Warning: package 'imputeTS' was built under R version 3.4.4
+```
+
+```r
+activity<-na.interpolation(activity_raw)
+```
+
+Q3: Histogram of steps taken each day and mean and median
+
+```r
+total_steps<-tapply(activity$steps,activity$date,sum)
+
+hist(total_steps, 
+     xlab = "Number of Steps", 
+     main = 
+       "Histogram: Steps per Day 
+     (Interpolated for Missing Data)")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+```r
+MeanPerDay_interpolated <- mean(total_steps, na.rm = TRUE)
+MedianPerDay_interpolated <- median(total_steps, na.rm = TRUE)
+print(MeanPerDay_interpolated)
+```
+
+```
+## [1] 9354.23
+```
+
+```r
+print(MedianPerDay_interpolated)
+```
+
+```
+## [1] 10395
+```
+Given the interpolation methodology used, we note changes to the mean and median wherein 
+                Mean Steps= 9354.23
+                Median Steps= 10395
+
+Are there differences in activity patterns between weekdays and weekends?
+
+Q1:  Seperating data into weekdays or weekends
+Here we will use ifelse statement
+
+```r
+activity$day <- ifelse(weekdays
+                       (as.Date(activity$date)) == 
+                         "Saturday" | 
+                         weekdays(as.Date(activity$date)) 
+                       == "Sunday", "weekend", "weekday")
+```
+
+Q2:  Average Steps/Interval Weekends vs Weekdays We need to also make a  pannel plot
+
+```r
+stepsperintweekend <- tapply(activity[activity$day 
+                          == "weekend" ,]$steps, 
+                    activity[activity$day == "weekend" ,]$interval, mean, 
+                          na.rm = TRUE)
+
+stepsperintweekday <- tapply(activity[activity$day 
+                                      == "weekday" ,]$steps, 
+                             activity[activity$day == "weekday" ,]$interval, mean, 
+                             na.rm = TRUE)
+
+par(mfrow=c(1,2))
+
+plot(as.numeric(names(stepsperintweekday)), 
+     stepsperintweekday, 
+     xlab = "Interval", 
+     ylab = "Steps", 
+     main = "Activity Pattern (Weekdays)", 
+     type = "l")
+
+
+plot(as.numeric(names(stepsperintweekend)), 
+     stepsperintweekend, 
+     xlab = "Interval", 
+     ylab = "Steps", 
+     main = "Activity Pattern (Weekends)", 
+     type = "l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+We can clearly see that weekend activity is higher than weekday activity.
+
+
+
+
+
+
